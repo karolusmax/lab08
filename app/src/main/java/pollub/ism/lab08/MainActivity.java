@@ -7,17 +7,21 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-
 import pollub.ism.lab08.databinding.ActivityMainBinding;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+
 
 public class MainActivity extends AppCompatActivity {
 
-    private String wybraneWarzywoNazwa = null;
-    private Integer wybraneWarzywoIlosc = null;
+    private String wybraneWarzywoNazwa=null;
+    private Integer wybraneWarzywoIlosc=null;
 
-    public enum OperacjaMagazynowa {SKLADUJ, WYDAJ};
+    public enum OperacjaMagazynowa{ SKLADUJ, WYDAJ}
 
-    private BazaMagazynowa bazaDanych;
+    public BazaMagazynowa bazaDanych;
 
     private ActivityMainBinding binding;
     private ArrayAdapter<CharSequence> adapter;
@@ -25,76 +29,78 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
-        bazaDanych = Room.databaseBuilder(getApplicationContext(), BazaMagazynowa.class, BazaMagazynowa.NAZWA_BAZY)
+
+        bazaDanych= Room.databaseBuilder(getApplicationContext(),BazaMagazynowa.class,BazaMagazynowa.NAZWA_BAZY)
                 .allowMainThreadQueries().build();
 
-        if(bazaDanych.pozycjaMagazynowaDAO().size() == 0){
-            String[] asortyment = getResources().getStringArray(R.array.Asortyment);
-            for(String nazwa : asortyment){
-                PozycjaMagazynowa pozycjaMagazynowa = new PozycjaMagazynowa();
-                pozycjaMagazynowa.NAME = nazwa; pozycjaMagazynowa.QUANTITY = 0;
+        if(bazaDanych.pozycjaMagazynowaDAO().size()==0){
+            String[] asortyment=getResources().getStringArray(R.array.Asortyment);
+            for(String nazwa: asortyment){
+                PozycjaMagazynowa pozycjaMagazynowa=new PozycjaMagazynowa();
+                pozycjaMagazynowa.NAME=nazwa;
+                pozycjaMagazynowa.QUANTITY=0;
                 bazaDanych.pozycjaMagazynowaDAO().insert(pozycjaMagazynowa);
             }
         }
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
+
+        binding=ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        adapter = ArrayAdapter.createFromResource(this, R.array.Asortyment, android.R.layout.simple_dropdown_item_1line);
+
+        adapter=ArrayAdapter.createFromResource(this,R.array.Asortyment, android.R.layout.simple_dropdown_item_1line);
         binding.spinner.setAdapter(adapter);
 
-        binding.przyciskSkladuj.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                zmienStan(OperacjaMagazynowa.SKLADUJ);
-            }
-        });
+        binding.przyciskSkladuj.setOnClickListener(v -> zmienStan(OperacjaMagazynowa.SKLADUJ));
 
-        binding.przyciskWydaj.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                zmienStan(OperacjaMagazynowa.WYDAJ);
-            }
-        });
+        binding.przyciskWydaj.setOnClickListener(v -> zmienStan(OperacjaMagazynowa.WYDAJ));
 
         binding.spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                wybraneWarzywoNazwa = adapter.getItem(i).toString(); // <---
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                wybraneWarzywoNazwa=adapter.getItem(position).toString();
                 aktualizuj();
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-                //Nie będziemy implementować, ale musi być
+            public void onNothingSelected(AdapterView<?> parent) {
+
             }
         });
+
+
     }
 
     private void aktualizuj(){
-        wybraneWarzywoIlosc = bazaDanych.pozycjaMagazynowaDAO().findQuantityByName(wybraneWarzywoNazwa);
-        binding.tekstStanMagazynu.setText("Stan magazynu dla " + wybraneWarzywoNazwa + " wynosi: " + wybraneWarzywoIlosc);
+        Integer staraIlosc = wybraneWarzywoIlosc;
+        if (null == staraIlosc) {
+            staraIlosc=0;
+        }
+        wybraneWarzywoIlosc=bazaDanych.pozycjaMagazynowaDAO().findQuantityByName(wybraneWarzywoNazwa);
+        binding.tekstStanuMagazynu.setText("Stan magazynu "+wybraneWarzywoNazwa+ " wynosi: "+wybraneWarzywoIlosc);
+        Date c= Calendar.getInstance().getTime();
+        String dateFormat=new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
+        String linia=new StringBuilder().append("Data: "+dateFormat+" czas: "+c+" stara ilość = " +staraIlosc+" nowa ilość = "+wybraneWarzywoIlosc).toString();
+        binding.daneWarzywniaka.append(linia+"\n");
     }
 
-    private void zmienStan(OperacjaMagazynowa operacja){
+    private void zmienStan(OperacjaMagazynowa operacjaMagazynowa){
+        Integer zmianaIlosci,nowaIlosc=null;
 
-        Integer zmianaIlosci = null, nowaIlosc = null;
+        try{
+            zmianaIlosci=Integer.parseInt(binding.edycjaIlosc.getText().toString());
 
-        try {
-            zmianaIlosci = Integer.parseInt(binding.edycjaIlosc.getText().toString());
-        }catch(NumberFormatException ex){
+        }catch (NumberFormatException ex){
             return;
         }finally {
             binding.edycjaIlosc.setText("");
         }
 
-        switch (operacja){
-            case SKLADUJ: nowaIlosc = wybraneWarzywoIlosc + zmianaIlosci; break;
-            case WYDAJ: nowaIlosc = wybraneWarzywoIlosc - zmianaIlosci; break;
+        switch(operacjaMagazynowa){
+            case SKLADUJ: nowaIlosc=wybraneWarzywoIlosc+zmianaIlosci;break;
+            case WYDAJ: nowaIlosc=wybraneWarzywoIlosc-zmianaIlosci;break;
         }
 
         bazaDanych.pozycjaMagazynowaDAO().updateQuantityByName(wybraneWarzywoNazwa,nowaIlosc);
-
         aktualizuj();
     }
 }
