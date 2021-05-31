@@ -8,18 +8,22 @@ import androidx.room.Update;
 @Dao
 public interface PozycjaMagazynowaDAO {
 
-    @Insert  //Automatyczna kwerenda wystarczy
-    public void insert(PozycjaMagazynowa pozycja);
+    @Insert
+    void insert(PozycjaMagazynowa pozycjaMagazynowa);
 
-    @Update //Automatyczna kwerenda wystarczy
-    void update(PozycjaMagazynowa pozycja);
+    @Update
+    void update(PozycjaMagazynowa pozycjaMagazynowa);
 
-    @Query("SELECT QUANTITY FROM Warzywniak WHERE NAME= :wybraneWarzywoNazwa") //Nasza kwerenda
+    @Query("SELECT QUANTITY FROM Warzywniak WHERE NAME= :wybraneWarzywoNazwa")
     int findQuantityByName(String wybraneWarzywoNazwa);
 
-    @Query("UPDATE Warzywniak SET QUANTITY = :wybraneWarzywoNowaIlosc WHERE NAME= :wybraneWarzywoNazwa")
+    @Query("UPDATE Warzywniak SET QUANTITY =:wybraneWarzywoNowaIlosc WHERE NAME= :wybraneWarzywoNazwa")
     void updateQuantityByName(String wybraneWarzywoNazwa, int wybraneWarzywoNowaIlosc);
 
-    @Query("SELECT COUNT(*) FROM Warzywniak") //Ile jest rekordów w tabeli
+    @Query("UPDATE Warzywniak SET OLD_QUANTITY =:staraIlosc, QUANTITY =:nowaIlosc, data=:data, czas=:czas WHERE NAME =:wybraneWarzywoNazwa")
+    void updateTimeDateAndQuantity(String wybraneWarzywoNazwa, int staraIlosc, int nowaIlosc, String data, String czas);
+
+    @Query("SELECT COUNT(*) FROM Warzywniak")
     int size();
+
 }

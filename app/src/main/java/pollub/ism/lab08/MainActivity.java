@@ -7,11 +7,11 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import pollub.ism.lab08.databinding.ActivityMainBinding;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import pollub.ism.lab08.databinding.ActivityMainBinding;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -40,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
                 PozycjaMagazynowa pozycjaMagazynowa=new PozycjaMagazynowa();
                 pozycjaMagazynowa.NAME=nazwa;
                 pozycjaMagazynowa.QUANTITY=0;
+                pozycjaMagazynowa.czas="00:00:00";
+                pozycjaMagazynowa.data="01-01-2021";
                 bazaDanych.pozycjaMagazynowaDAO().insert(pozycjaMagazynowa);
             }
         }
@@ -70,21 +72,22 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+
     private void aktualizuj(){
         Integer staraIlosc = wybraneWarzywoIlosc;
         if (null == staraIlosc) {
             staraIlosc=0;
         }
         wybraneWarzywoIlosc=bazaDanych.pozycjaMagazynowaDAO().findQuantityByName(wybraneWarzywoNazwa);
-        binding.tekstStanuMagazynu.setText("Stan magazynu "+wybraneWarzywoNazwa+ " wynosi: "+wybraneWarzywoIlosc);
-        Date c= Calendar.getInstance().getTime();
-        String dateFormat=new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
-        String linia=new StringBuilder().append("Data: "+dateFormat+" czas: "+c+" stara ilość = " +staraIlosc+" nowa ilość = "+wybraneWarzywoIlosc).toString();
-        binding.daneWarzywniaka.append(linia+"\n");
+        binding.tekstStanuMagazynu.setText("Stan magazynu dla "+wybraneWarzywoNazwa+ " wynosi: "+wybraneWarzywoIlosc);
+
+
     }
 
     private void zmienStan(OperacjaMagazynowa operacjaMagazynowa){
         Integer zmianaIlosci,nowaIlosc=null;
+
 
         try{
             zmianaIlosci=Integer.parseInt(binding.edycjaIlosc.getText().toString());
@@ -100,7 +103,11 @@ public class MainActivity extends AppCompatActivity {
             case WYDAJ: nowaIlosc=wybraneWarzywoIlosc-zmianaIlosci;break;
         }
 
-        bazaDanych.pozycjaMagazynowaDAO().updateQuantityByName(wybraneWarzywoNazwa,nowaIlosc);
+        String czas= Calendar.getInstance().getTime().toString();
+        String dateFormat=new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
+        String linia=new StringBuilder().append("Data :"+dateFormat+" czas :"+czas+"stara ilość =>" +wybraneWarzywoIlosc+" nowa ilosć: "+nowaIlosc).toString();
+        binding.daneWarzywniaka.append(linia+"\n");
+        bazaDanych.pozycjaMagazynowaDAO().updateTimeDateAndQuantity(wybraneWarzywoNazwa,wybraneWarzywoIlosc,nowaIlosc,dateFormat,czas);
         aktualizuj();
     }
 }
